@@ -8,7 +8,10 @@ dataAddress: http://receita.economia.gov.br/orientacao/tributaria/cadastros/cada
 
 #Importação das bibliotecas
 ```{r}
-library(tidyverse)
+if (!require(tidyverse)) install.packages("tidyverse") 
+if (!require(readxl)) install.packages("readxl") 
+if (!require(tidyr)) install.packages("tidyr") 
+if (!require(openxlsx)) install.packages("openxlsx") 
 library(tidyverse)
 library(readxl)
 library(tidyr)
