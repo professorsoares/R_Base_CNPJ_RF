@@ -63,5 +63,5 @@ as_tibble # %>%
 
 ```{r}
 df_baseCNPJ_PRIN %>%  
-      write_csv("dados/_df_CNPJ1_full1_Fund.csv")
+      write_csv("dados/_df_CNPJ1_full1_Fundv2.csv")
 ```
