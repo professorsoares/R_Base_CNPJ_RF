@@ -36,10 +36,32 @@ tipo_atual  <- dados_Layout %>%
 dados_Layout_por_tipo <- dados_Layout %>% 
   filter(TIPO_REGISTRO == as.character(tipo_atual$TIPO_REGISTRO),POSICAO_R!="NA")   %>% 
   mutate(NOME_REGISTRO=str_replace_all(NOME_REGISTRO," |/|-","_"))  
-    # %>%  mutate(NOME_REGISTRO=iconv(str_replace_all(NOME_REGISTRO," |/|-","_"), to="ASCII//TRANSLIT"))  %>%    
-  # ESTÁ DANDO ERRO...
-  # mutate(COLUNAFIM=COLUNA + QTDE_CARACTERES)
-dados_Layout_por_tipo
+dados_Layout_por_tipo %>% head(6) %>% select(COLUNA, QTDE_CARACTERES, POSICAO_R,NOVACOLUNA, ID_TIPO_REGISTRO, NOME_REGISTRO,TIPO_REGISTRO)
+```
+# 
+```{r}
+
+readr_example <- function(path = NULL) {
+  if (is.null(path)) {
+    dir(system.file("extdata", package = "readr"))
+  } else {
+    system.file("extdata", path, package = "readr", mustWork = TRUE)
+  }
+}
+
+```
+
+
+#teste
+```{r}
+fwf_sample  <- read_lines("dados/dadosCNPJ01Amostra100.txt")  #Amostra com 100 linhas.
+
+read_fwf (  fwf_sample[str_detect(fwf_sample,"^1")] , fwf_widths (  
+                t(dados_Layout_por_tipo$QTDE_CARACTERES),
+                t(dados_Layout_por_tipo$NOME_REGISTRO)            )
+         )
+
+
 ```
 
 
