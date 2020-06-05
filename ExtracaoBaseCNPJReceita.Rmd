@@ -12,13 +12,16 @@ if (!require(tidyverse)) install.packages("tidyverse")
 if (!require(readxl)) install.packages("readxl") 
 if (!require(tidyr)) install.packages("tidyr") 
 if (!require(openxlsx)) install.packages("openxlsx") 
+
 library(tidyverse)
 library(readxl)
 library(tidyr)
 library(openxlsx)
 ```
 
-#Leitura das bases de dados
+
+#Leitura das bases de dados que foram retirados do site da Receita Federal e estão armazenados na pasta "dados"
+#Existe um arquivo completo e uma cópia dele restrito a apenas algumas linhas. Caso deseje o arquivo como todas as informações, alterar a linha comentada da "baseCNPJ"
 ```{r}
 # LAYOUT:  http://200.152.38.155/CNPJ/LAYOUT_DADOS_ABERTOS_CNPJ.pdf
 dados_Layout  <- read_excel("dados/LAYOUT_DADOS_ABERTOS_CNPJ.xlsx")
@@ -27,29 +30,34 @@ dados_Layout  <- read_excel("dados/LAYOUT_DADOS_ABERTOS_CNPJ.xlsx")
 baseCNPJ       <- read_lines("dados/dadosCNPJ01Amostra100.txt")  #Amostra com 100 linhas.
 ```
 
-#Pegar intervalos da planilha
+
+#Pega intervalos da planilha, para trabalharmos com um tipo de registro por vez. Altere o valor de x para que outro tipo de registro seja escolhido
 ```{r}
+# x = 0 -> HEADER
+# x = 1 -> LAYOUT PRINCIPAL
+# x = 2 -> LAYOUT SOCIOS
+# X = 3 -> CNAEs SECUNDÁRIAS
+# x = 4 -> TRAILLER
+
+x <- 1
 tipo_atual  <- dados_Layout %>% 
   distinct(TIPO_REGISTRO, ID_TIPO_REGISTRO) %>%
-    filter(ID_TIPO_REGISTRO==1)   #ou TIPO_REGISTRO=="LAYOUT PRINCIPAL"
+    filter(ID_TIPO_REGISTRO == x)
 ```
 
-#Trata dados
+#Reune todas as informações das linhas do documento "LAYOUT_DADOS_ABERTOS_CNPJ.xlsx" em que o tipo de registro é o mesmo do escolhido no chunk anterior 
 ```{r}
 dados_Layout_por_tipo <- dados_Layout %>% 
   filter(TIPO_REGISTRO == as.character(tipo_atual$TIPO_REGISTRO),POSICAO_R!="NA")   %>% 
   mutate(NOME_REGISTRO=str_replace_all(NOME_REGISTRO," |/|-","_"))  
-    # %>%  mutate(NOME_REGISTRO=iconv(str_replace_all(NOME_REGISTRO," |/|-","_"), to="ASCII//TRANSLIT"))  %>%    
-  # ESTÁ DANDO ERRO...
-  # mutate(COLUNAFIM=COLUNA + QTDE_CARACTERES)
-dados_Layout_por_tipo
+
 ```
 
 
-# Seleciona e tabula o LAYOUT PRINCIPAL
+#Utiliza o documento "dadosCNPJ01Amostra100.txt" com o esqueleto das informações levantadas no chunk anterior. A fim de que seus dados respeitasse a quantidade de caracter para cada coluna. E o adiciona a um data frame, para melhor visualização
 ```{r}
   
-df_baseCNPJ_PRIN <- baseCNPJ[str_detect(baseCNPJ,"^1")] %>% 
+df_baseCNPJ <- baseCNPJ[str_detect(baseCNPJ,"^1")] %>% 
   map(~str_sub(.x, 
                   start=t(dados_Layout_por_tipo$COLUNA)[1:(length(t(dados_Layout_por_tipo$COLUNA)))], 
                   end=(t(dados_Layout_por_tipo$POSICAO_R))))%>%
@@ -63,8 +71,8 @@ as_tibble # %>%
 
 ```
 
-
+#Esse chunk é o documento final gerado por esse programa. Todo o data frame gerado no chunk anterior é armazenado em um documento csv que pode ser encontrado na pasta "saídas" desse projeto
 ```{r}
-df_baseCNPJ_PRIN %>%  
-      write_csv("dados/_df_CNPJ1_full1_Fundv2.csv")
+df_baseCNPJ %>%  
+      write_csv("saídas/df_DadosPorTipo_full.csv")
 ```
