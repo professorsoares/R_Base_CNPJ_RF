@@ -1,0 +1,47 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+#Importação de bibliotecas do R
+#A instalação dessa biblioteca permite o uso de códigos durante o relatório.
+```{r}
+
+library(dplyr)
+library(tidyverse)
+library(readr)
+library(readxl)
+library(tidyr)
+library(openxlsx)
+```
+
+ 
+
+#Leitura das bases de dados do IPEA
+#Os códigos abaixo geram, a partir da leitura dos arquivos em *.csv*, as bases de dados contendo as informações declaradas por cada OSC referentes aos recursos e projetos que possuem.
+```{r}
+# Base de dados dos recursos das OSCs
+recursos <- read.csv("dados/recursos.csv", sep=";", encoding = "UTF-8")
+
+
+# Base de dados dos projetos das OSCs
+projetos <- read.csv("dados/lista_projetos.csv", sep=";", encoding = "UTF-8")
+
+
+```
+
+ 
+
+#Registro das fundação que declararam recursos e os nomes dos projeto de cada
+#Para selecionar outra coluna da base de dados "Recursos", só é preciso substituir "tx_razao_social_osc" pelo nome daquela que se deseja.
+#Para selecionar outra coluna da base de dados "Projetos", só é preciso substituir "tx_nome_projeto" pelo nome daquela que se deseja.
+#Ve se a seleção dos dados dos nomes de cada fundação (razão social) de cada OSC que declarou recursos e dos nomes de cada projetos registrado por cada uma.
+```{r}
+# Razão social
+fundacoes <- recursos %>% distinct(tx_razao_social_osc)
+
+
+# Projetos
+nomes_projetos <- projetos %>% distinct(tx_nome_projeto)
+
+```
