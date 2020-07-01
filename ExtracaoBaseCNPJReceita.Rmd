@@ -43,18 +43,22 @@ x <- 1
 tipo_atual  <- dados_Layout %>% 
   distinct(TIPO_REGISTRO, ID_TIPO_REGISTRO) %>%
     filter(ID_TIPO_REGISTRO == x)
+
+#teste <- dados_Layout[c(5,18,24,49,50,53,66),]
 ```
 
 #Reune todas as informações das linhas do documento "LAYOUT_DADOS_ABERTOS_CNPJ.xlsx" em que o tipo de registro é o mesmo do escolhido no chunk anterior 
 ```{r}
 dados_Layout_por_tipo <- dados_Layout %>% 
   filter(TIPO_REGISTRO == as.character(tipo_atual$TIPO_REGISTRO),POSICAO_R!="NA")   %>% 
-  mutate(NOME_REGISTRO=str_replace_all(NOME_REGISTRO," |/|-","_"))  
+  mutate(NOME_REGISTRO=str_replace_all(NOME_REGISTRO," |/|-","_"))
+
+
 
 ```
 
 
-#Utiliza o documento "dadosCNPJ01Amostra100.txt" com o esqueleto das informações levantadas no chunk anterior. A fim de que seus dados respeitasse a quantidade de caracter para cada coluna. E o adiciona a um data frame, para melhor visualização
+#Utiliza o documento "dadosCNPJ01Amostra100.txt" com o esqueleto das informações levantadas no chunk anterior. A fim de que seus dados respeitasse a quantidade de caracter para cada coluna. E o adiciona a um data frame, para melhor visualização. Conserta a formatação das datas tbm
 ```{r}
   
 df_baseCNPJ <- baseCNPJ[str_detect(baseCNPJ,"^1")] %>% 
@@ -68,6 +72,11 @@ df_baseCNPJ <- baseCNPJ[str_detect(baseCNPJ,"^1")] %>%
         ) %>%
 as_tibble # %>% 
   # filter(CODIGO_NATUREZA_JURIDICA=="3069", UF=="RJ") # Descomentar quando estiver utilizando o arquivo completo
+
+x <- apply(df_baseCNPJ[,c(9,15)],2,function(x)data.frame(as.Date(as.character(x), "%Y%m%d")))
+x <- data.frame(x)
+names(x) <- c("DATA_SITUACAO_CADASTRAL" ,"DATA_INICIO_ATIVIDADE")
+df_baseCNPJ[,c(9,15)] <- x
 
 ```
 
