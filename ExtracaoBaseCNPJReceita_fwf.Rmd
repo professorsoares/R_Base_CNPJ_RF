@@ -98,7 +98,7 @@ as_tibble  %>%
 
 #df_baseCNPJ_PRIN <- baseCNPJ #>%   # filter(CODIGO_NATUREZA_JURIDICA=="3069", UF=="RJ") # Descomentar quando estiver utilizando o arquivo completo
   
-```
+``` 
 
 #Export data
 ```{r}
