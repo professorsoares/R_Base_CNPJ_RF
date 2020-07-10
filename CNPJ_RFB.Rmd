@@ -1,0 +1,61 @@
+---
+title: "Base dados CNPJ da RFB"
+output:
+    html_document:
+      toc: true
+      toc_depth: 3
+      toc_float: true
+      code_folding: hide
+      df_print: paged
+      highlight: tango
+      lightbox: true
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+library(flexdashboard)
+library(qsacnpj)
+library(fs)
+library(tidyverse)
+
+setwd("Base_CNPJ/")
+
+qsacnpj::gerar_bd_cnpj(path_arquivos_txt = "Base_CNPJ/",
+                       localizar_cnpj = "NAO",
+                       n_lines = 100000,
+                       armazenar = "csv")
+
+dir_ls("bd_cnpj_tratados/")
+
+sit_cad <- read_delim("bd_cnpj_tratados/tab_situacao_cadastral.csv", delim = "#")
+
+cnpj <- read_delim("bd_cnpj_tratados/tab_cnpj_entes_publicos.csv", delim = "#" )
+
+nat_jur <- read_delim("bd_cnpj_tratados/tab_natureza_juridica.csv", delim = "#")
+
+
+
+```
+
+```{r}
+dir_ls("bd_cnpj_tratados/")
+
+```
+
+
+# Listando Natureza Jurídica = Lucrativos
+
+```{r, warning=FALSE}
+
+nat_jur %>% filter(str_detect(nm_natureza_juridica, "Lucrativos"))
+
+
+```
+
+# Listando Subclasse Natureza Jurídica = Fundação
+
+```{r}
+nat_jur %>% filter(str_detect(nm_subclass_natureza_juridica, "Fundação"))
+```
+
