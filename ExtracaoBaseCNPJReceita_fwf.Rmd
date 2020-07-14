@@ -7,60 +7,75 @@ dataAddress: http://receita.economia.gov.br/orientacao/tributaria/cadastros/cada
 ---
 
 #Importação das bibliotecas
-```{r}
-library(tidyverse)
+```{r, message=FALSE}
 library(tidyverse)
 library(readxl)
 library(tidyr)
 library(openxlsx)
+library(beepr)
+
+#install.packages("beepr")
+
 ```
 
-#Leitura das bases de dados
+#Import (Step 1 - Flow)
+
+##Definir arquivos e numeração
+```{r}
+
+#DEFs
+numArquivo = "20"
+
+strDadosINI <- str_c("c:/Programas/DADOS_ABERTOS_CNPJ.FUND_",numArquivo,"_INI.csv")
+strDadosCNPJ <- str_c("c:/Programas/DADOS_ABERTOS_CNPJ_",numArquivo,".zip")
+strDadosOUT <- str_c("c:/Programas/DADOS_ABERTOS_CNPJ.FUND_",numArquivo,".csv")
+
+```                                                                                          
+
+##Importar arquivos 
 ```{r}
 # LAYOUT:  http://200.152.38.155/CNPJ/LAYOUT_DADOS_ABERTOS_CNPJ.pdf
 dados_Layout  <- read_excel("dados/LAYOUT_DADOS_ABERTOS_CNPJ.xlsx")
+
+dados_Layout %>% head(1) %>%     
+    write.csv2(strDadosINI)
 # ARQUIVO: "Dados Abertos CNPJ 01"
 #baseCNPJ      <- read_lines("dados/K3241.K003200DV.D00422.L00001.txt")
-baseCNPJ       <- read_lines("dados/dadosCNPJ01Amostra100.txt")  #Amostra com 100 linhas.
+#baseCNPJ       <- read_lines("dados/dadosCNPJ01Amostra.zip")  #Amostra com 100 linhas.
+baseCNPJ       <- read_lines(strDadosCNPJ)  #FULL.
+
 ```
 
-#Pegar intervalos da planilha
+
+#Tidy and Transform (Steps 2 e 3 - Flow)
+
+##Pegar intervalos da planilha
 ```{r}
 tipo_atual  <- dados_Layout %>% 
   distinct(TIPO_REGISTRO, ID_TIPO_REGISTRO) %>%
     filter(ID_TIPO_REGISTRO==1)   #ou TIPO_REGISTRO=="LAYOUT PRINCIPAL"
 ```
 
-#Trata dados
+
+##Tratar dados
 ```{r}
 dados_Layout_por_tipo <- dados_Layout %>% 
   filter(TIPO_REGISTRO == as.character(tipo_atual$TIPO_REGISTRO),POSICAO_R!="NA")   %>% 
   mutate(NOME_REGISTRO=str_replace_all(NOME_REGISTRO," |/|-","_"))  
-dados_Layout_por_tipo %>% head(6) %>% select(COLUNA, QTDE_CARACTERES, POSICAO_R,NOVACOLUNA, ID_TIPO_REGISTRO, NOME_REGISTRO,TIPO_REGISTRO)
-```
-# 
-```{r}
-
-readr_example <- function(path = NULL) {
-  if (is.null(path)) {
-    dir(system.file("extdata", package = "readr"))
-  } else {
-    system.file("extdata", path, package = "readr", mustWork = TRUE)
-  }
-}
-
+dados_Layout_por_tipo %>% head(6) %>% select(COLUNA, QTDE_CARACTERES, POSICAO_R, ID_TIPO_REGISTRO, NOME_REGISTRO,TIPO_REGISTRO)
 ```
 
 
-#teste
+#Usando read_fwf   #DEPRECATED
 ```{r}
-fwf_sample  <- read_lines("dados/dadosCNPJ01Amostra100.txt")  #Amostra com 100 linhas.
+	#DEPRECATED
 
-read_fwf (  fwf_sample[str_detect(fwf_sample,"^1")] , fwf_widths (  
-                t(dados_Layout_por_tipo$QTDE_CARACTERES),
-                t(dados_Layout_por_tipo$NOME_REGISTRO)            )
-         )
+	#fwf_sample  <- read_lines("dados/dadosCNPJ01Amostra100.txt")  #Amostra com 100 linhas.
 
+	# baseCNPJ <- read_fwf (  baseCNPJ[str_detect(baseCNPJ,"^1")] , fwf_widths (  
+	#                 t(dados_Layout_por_tipo$QTDE_CARACTERES),
+	#                 t(dados_Layout_por_tipo$NOME_REGISTRO)            )
+	#          )
 
 ```
 
@@ -68,22 +83,57 @@ read_fwf (  fwf_sample[str_detect(fwf_sample,"^1")] , fwf_widths (
 # Seleciona e tabula o LAYOUT PRINCIPAL
 ```{r}
   
-df_baseCNPJ_PRIN <- baseCNPJ[str_detect(baseCNPJ,"^1")] %>% 
-  map(~str_sub(.x, 
-                  start=t(dados_Layout_por_tipo$COLUNA)[1:(length(t(dados_Layout_por_tipo$COLUNA)))], 
+df_baseCNPJ_PRIN <- baseCNPJ[str_detect(baseCNPJ,"^1")] %>%
+  map(~str_sub(.x,
+                  start=t(dados_Layout_por_tipo$COLUNA)[1:(length(t(dados_Layout_por_tipo$COLUNA)))],
                   end=(t(dados_Layout_por_tipo$POSICAO_R))))%>%
     transpose %>%
       map(as.character) %>%
         set_names(
           t(dados_Layout_por_tipo$NOME_REGISTRO)
         ) %>%
-as_tibble # %>% 
-  # filter(CODIGO_NATUREZA_JURIDICA=="3069", UF=="RJ") # Descomentar quando estiver utilizando o arquivo completo
+as_tibble  %>%
+  filter(CODIGO_NATUREZA_JURIDICA %in% c("3069","3204","3212"))  # Descomentar quando estiver utilizando o arquivo completo
+
+
+#df_baseCNPJ_PRIN <- baseCNPJ #>%   # filter(CODIGO_NATUREZA_JURIDICA=="3069", UF=="RJ") # Descomentar quando estiver utilizando o arquivo completo
+  
+``` 
+
+#Export data
+```{r}
+	
+	#baseCNPJ  %>% filter(CODIGO_NATUREZA_JURIDICA=="3069", UF=="RJ") # Descomentar quando estiver utilizando o arquivo completo
+
+	#Regra dos códigos utilizados para filtrar as fundações:
+	#------------------------------------------------------------
+	# 306-9 - Fundação Privada (
+		# https://concla.ibge.gov.br/estrutura/natjur-estrutura/natureza-juridica-2018/23161-306-9-fundacao-privada
+	#) 
+
+	# 320-4 - Estabelecimento, no Brasil, de Fundação ou Associação Estrangeiras ( 	
+		# https://concla.ibge.gov.br/estrutura/natjur-estrutura/natureza-juridica-2018/23187-320-4-estabelecimento-no-brasil-de-fundacao-ou-associacao-estrangeiras 
+	#) 
+
+	# 321-2 - Fundação ou Associação Domiciliada no Exterior  (		
+		# https://concla.ibge.gov.br/estrutura/natjur-estrutura/natureza-juridica-2018/23188-321-2-fundacao-ou-associacao-domiciliadas-no-exterior 
+	#) 
+	#------------------------------------------------------------
+
+	df_baseCNPJ_PRIN %>%
+		# mutate(diaformatado=lubridate::dmy(dia)) %>% 
+		filter(CODIGO_NATUREZA_JURIDICA %in% c("3069","3204","3212")) %>% 
+			write.csv2(strDadosOUT)
 
 ```
 
-
+# Alerta sonoro, Limpa a memória e reinicia o R.
 ```{r}
-df_baseCNPJ_PRIN %>%  
-      write_csv("dados/_df_CNPJ1_full1_Fund.csv")
+beep()
+beep()
+beep()
+
+rm(list = ls(all.names = TRUE)) #will clear all objects includes hidden objects.
+gc() #free up memrory and report the memory usage.
+
 ```
