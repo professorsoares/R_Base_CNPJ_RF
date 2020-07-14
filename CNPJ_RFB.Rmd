@@ -18,6 +18,7 @@ library(flexdashboard)
 library(qsacnpj)
 library(fs)
 library(tidyverse)
+library(DT)
 
 setwd("Base_CNPJ/")
 
@@ -48,7 +49,9 @@ dir_ls("bd_cnpj_tratados/")
 
 ```{r, warning=FALSE}
 
-nat_jur %>% filter(str_detect(nm_natureza_juridica, "Lucrativos"))
+df_ntj <- nat_jur %>% filter(str_detect(nm_natureza_juridica, "Lucrativos"))
+
+datatable(df_ntj ,options = list(pageLength = 5))
 
 
 ```
@@ -56,6 +59,80 @@ nat_jur %>% filter(str_detect(nm_natureza_juridica, "Lucrativos"))
 # Listando Subclasse Natureza Jurídica = Fundação
 
 ```{r}
-nat_jur %>% filter(str_detect(nm_subclass_natureza_juridica, "Fundação"))
+df_sbntj <- nat_jur %>% filter(str_detect(nm_subclass_natureza_juridica, "Fundação")) %>% 
+  select(cod_subclass_natureza_juridica, nm_subclass_natureza_juridica)
+
+datatable(df_sbntj,options = list(pageLength = 5))
+
+```
+
+## Total de Fundações na base
+
+```{r}
+
+df_cnpj_nj <- cnpj %>% 
+  select(cnpj, nome_empresarial, cod_natureza_juridica) %>% 
+  mutate(cod_subclass_natureza_juridica = cod_natureza_juridica)
+
+df_natjur <- nat_jur %>% 
+  filter(str_detect(nm_subclass_natureza_juridica, "Fundação"))
+
+
+df_join <- df_natjur %>% 
+  inner_join(df_cnpj_nj, by = "cod_subclass_natureza_juridica")
+
+
+df_join %>%
+  group_by(nm_subclass_natureza_juridica) %>% 
+  count(nm_subclass_natureza_juridica) %>% 
+  ggplot(aes(x=n, y=nm_subclass_natureza_juridica, fill=nm_subclass_natureza_juridica)) +
+  geom_col() +
+  labs(title="Total de Funfações por Nat Jurídica") +
+  geom_text(aes(label = n), size = 3.5, position = position_stack(vjust = 0.8)) +
+  theme(legend.position="none")
+
+
+
+```
+
+
+# Fundações no Estado do RJ com a subclass_natureza_juridica {.tabset .tabset-fade .tabset-pills}
+
+
+1139 Fundação Pública de Direito Público Federal                        
+1147 Fundação Pública de Direito Público Estadual ou do Distrito Federal
+1155 Fundação Pública de Direito Público Municipal                      
+1252 Fundação Pública de Direito Privado Federal                        
+1260 Fundação Pública de Direito Privado Estadual ou do Distrito Federal
+1279 Fundação Pública de Direito Privado Municipal
+
+
+## Total de Fundações por Nat Juridica RJ
+
+```{r}
+
+df_cnpj_rj <- cnpj %>% 
+  filter(cod_natureza_juridica %in% c("1139","1147","1155","1252","1260","1279"),
+         ente_federativo_responsavel == "RJ")
+
+df_cnpj_rj %>% 
+  group_by(cod_natureza_juridica) %>% 
+  count(cod_natureza_juridica) %>% 
+  ggplot(aes(x=cod_natureza_juridica, y=n, fill=cod_natureza_juridica)) +
+  geom_col() +
+  coord_flip() +
+  labs(title="Total de Funfações por Nat Jurídica") +
+  geom_text(aes(label = n), size = 3.5, position = position_stack(vjust = 0.8)) +
+  theme(legend.position="none")
+
+```
+
+## Fundações Nat Juridica RJ
+
+```{r}
+
+
+datatable(df_cnpj_rj,options = list(pageLength = 5, scrollY = "400px"))
+
 ```
 
