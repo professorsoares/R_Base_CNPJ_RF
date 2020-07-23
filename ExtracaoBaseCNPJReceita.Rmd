@@ -40,11 +40,11 @@ baseCNPJ       <- read_lines("dados/dadosCNPJ01Amostra100.txt")  #Amostra com 10
 # x = 4 -> TRAILLER
 
 x <- 1
+
 tipo_atual  <- dados_Layout %>% 
   distinct(TIPO_REGISTRO, ID_TIPO_REGISTRO) %>%
     filter(ID_TIPO_REGISTRO == x)
 
-#teste <- dados_Layout[c(5,18,24,49,50,53,66),]
 ```
 
 #Reune todas as informações das linhas do documento "LAYOUT_DADOS_ABERTOS_CNPJ.xlsx" em que o tipo de registro é o mesmo do escolhido no chunk anterior 
